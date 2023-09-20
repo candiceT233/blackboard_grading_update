@@ -41,6 +41,20 @@ In general, make sure the master grading data file has these columns exactly:
 
 1. Format your workbook with columns `First Name`, `Last Name`, `Final Score`, and `All Comments`
 
+2. `All Comments` example format as below:
+```txt
+Q1: good
+Q2: (-0.25) incorrect.
+Q3: Great
+Q4: -
+Q5: b:
+(a) comment for a.
+(d) comment for b.
+Total:(-3 pts)
+Q6: (-1 pt) c: Some comment
+General Comment: Good.
+```
+
 
 ## Usage
 
