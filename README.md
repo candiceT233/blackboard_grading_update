@@ -28,7 +28,7 @@ Before using this script, ensure you have the following:
 - checking the box ` Include Comments for this Column`
 - `Delimiter Type : ` choose `Comma`
 
-3. Open your downloaded `master_grade_data.csv` file, open it and save as `master_grade_data.xlsx` to avoid formatting problem
+3. Open your downloaded `master_grade_data.csv` file, open it and save as `master_grade_data.xlsx` to avoid python string formatting problem
 
 In general, make sure the master grading data file has these columns exactly:
 
@@ -66,7 +66,7 @@ General Comment: Good.
 3. Run the script with the following command:
 
     ```
-    python update_grading_sheets.py master_grade_data.csv partial_grade_data.csv updated_master_grade_data.csv
+    python update_grading_sheets.py master_grade_data.xlsx partial_grade_data.csv updated_master_grade_data.csv
     ```
 
     - Replace `master_grade_data.xlsx` with the path to your master grading sheet (in EXCEL format).
