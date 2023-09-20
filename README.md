@@ -54,6 +54,7 @@ Total:(-3 pts)
 Q6: (-1 pt) c: Some comment
 General Comment: Good.
 ```
+- Each problem and sub-problem has comment and point subtraction within its own line.
 
 
 ## Usage
