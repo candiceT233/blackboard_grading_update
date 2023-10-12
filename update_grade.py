@@ -90,6 +90,9 @@ def update_grading_sheets(master_sheet_path, partial_sheet_path, output_sheet_pa
     master_df = read_master_to_dataframe(master_sheet_path, delimiter='\t')
 
     partial_df = pd.read_csv(partial_sheet_path)
+    
+    # drop rows without first name and last name valuse
+    partial_df = partial_df.dropna(subset=['First Name', 'Last Name'])
 
     # Assuming the column names for "Last Name" and "First Name" in both sheets are the same
     last_name_column = "Last Name"
@@ -108,51 +111,93 @@ def update_grading_sheets(master_sheet_path, partial_sheet_path, output_sheet_pa
         print("** No total points column found **")
         exit(1)
     
-    grading_note_column = [col for col in master_df.columns if "Grading Notes" in col][0]
-    if grading_note_column:
-        print(f"Updating comment for {grading_note_column}")
+    feedback_column = [col for col in master_df.columns if "Feedback to Learner" in col][0]
+    if feedback_column:
+        print(f"Updating comment for {feedback_column}")
     else:
         print("** No comment column found, only updating grade **")
     
-    grade_note_format_column = [col for col in master_df.columns if "Notes Format" in col][0]
-    if grade_note_format_column:
+    feedback_format_column = [col for col in master_df.columns if "Feedback Format" in col][0]
+    if feedback_format_column:
         print(f"Updating comment with HTML format")
     else:
         print("Updating comment in string format")
     
     # Iterate through the master DataFrame and find matching rows in the partial DataFrame
     counter = 0
+    
+    # list of tuples of names
+    first_last_names = []
+    
     print("\nMatching Rows:")
     for index, row in master_df.iterrows():
-        first_name = row[first_name_column]
-        last_name = row[last_name_column]
+        first_name = row[first_name_column].lower()
+        last_name = row[last_name_column].lower()
+        # split string by space and get the first and last name
+        first_name = first_name.split()[0]
+        last_name = last_name.split()[0]
         
-        matching_row = partial_df[(partial_df[first_name_column] == first_name) & (partial_df[last_name_column] == last_name)]
+        # convert partial_df first_name_column and last_name_column to lowercase and split by space and get the first and last name
+        partial_df[first_name_column] = partial_df[first_name_column].str.lower().str.split().str[0]
+        partial_df[last_name_column] = partial_df[last_name_column].str.lower().str.split().str[0]
+        
+        # partial_df[first_name_column] = partial_df[first_name_column].str.lower() #.strip()
+        # partial_df[last_name_column] = partial_df[last_name_column].str.lower() #.strip()
+        
+        # matching_row = partial_df[(partial_df[first_name_column] == first_name) & (partial_df[last_name_column] == last_name)]
+        
+        # find the matchin row if partial_df[first_name_column] is substring of first_name and partial_df[last_name_column] is substring of last_name
+        matching_row = partial_df[(partial_df[first_name_column].str.contains(first_name)) & (partial_df[last_name_column].str.contains(last_name))]
+        # find with equals
+        if matching_row.empty:
+            matching_row = partial_df[(partial_df[first_name_column] == first_name) & (partial_df[last_name_column] == last_name)]
+
+
+        
         if not matching_row.empty:
-            counter+=1            
+            counter+=1
+            first_last_names.append((first_name, last_name))
             
             if total_pts_column:
                 # total_pts_column = total_pts_column[0]
                 # update final score
-                master_df.at[index, total_pts_column] = matching_row.iloc[0]["Final Score"]
+                try:
+                    master_df.at[index, total_pts_column] = matching_row.iloc[0]["Final Score"]
+                except Exception as e:
+                    print(f"Error updating score for {first_name} {last_name}: {e}")
+                    pass
             
-            if grading_note_column:
+            if feedback_column:
                 
-                # update note format only if master_df.at[index, grading_note_column]
-                if master_df.at[index, grading_note_column]:
-                    if grade_note_format_column:
+                # update note format only if master_df.at[index, feedback_column]
+                if master_df.at[index, feedback_column]:
+                    if feedback_format_column:
                         # print("Converting comment to HTML")
                         # update comment
-                        master_df.at[index, grading_note_column] = convert_comment_to_html(matching_row.iloc[0]["All Comments"])
+                        master_df.at[index, feedback_column] = convert_comment_to_html(matching_row.iloc[0]["All Comments"])
                     else:
                         # print("Updating comment")
-                        master_df.at[index, grading_note_column] = matching_row.iloc[0]["All Comments"]
+                        master_df.at[index, feedback_column] = matching_row.iloc[0]["All Comments"]
                     
-                    master_df.at[index, "Notes Format"] = "HTML"
+                    master_df.at[index, "Feedback Format"] = "HTML"
             
-            if total_pts_column and grading_note_column:
-                print(f"Updated {first_name} {last_name} score: {master_df.at[index, total_pts_column]}\n comment: {master_df.at[index, grading_note_column]}\n")
-                    
+            if total_pts_column and feedback_column:
+                print(f"Updated {first_name} {last_name} score: {master_df.at[index, total_pts_column]}\n comment: {master_df.at[index, feedback_column]}\n")
+
+    
+    # check which row in partial_df is not updated
+    for index, row in partial_df.iterrows():
+        first_name = str(row[first_name_column]).lower()
+        last_name = str(row[last_name_column]).lower()
+        # split string by space and get the first and last name
+        first_name = first_name.split()[0]
+        last_name = last_name.split()[0]
+        
+        if (first_name, last_name) not in first_last_names:
+            print(f"** No matching row found for {first_name} {last_name} **")
+            print(row)
+            print()
+    
     
     print("\nTotal Matching Rows: {}".format(counter))
 
